@@ -38,6 +38,7 @@ steps:
         --docker-username=access \
         --docker-password='VI1KARUKYlWzagaUOsTENrOX3nC0ikJLr2nAv+n1sJ+ACRBhd1CY' \
         --docker-email=barvarsul5@gmail.com
+      sleep 60
       kubectl apply -f "Service-A/service-a-dep.yaml"
       kubectl apply -f "Service-A/service-a-srv.yaml"
       kubectl apply -f "Service-B/service-b-dep.yaml"
