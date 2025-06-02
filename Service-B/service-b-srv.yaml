@@ -1,0 +1,14 @@
+#creating ClusterIP service for service-b deployment
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-b-srv
+  labels:
+    app: service-b-srv
+spec:
+  type: ClusterIP
+  selector:
+    app: service-b-pod
+  ports:
+    - port: 80
+      targetPort: 80
