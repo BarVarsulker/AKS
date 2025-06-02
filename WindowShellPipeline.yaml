@@ -17,29 +17,36 @@ steps:
       az aks get-credentials --resource-group $RESOURCE_GROUP_NAME --name $AKS_CLUSTER_NAME
       $RG = az aks show --resource-group $RESOURCE_GROUP_NAME --name $AKS_CLUSTER_NAME --query nodeResourceGroup -o tsv
       az network public-ip create --resource-group $RG `
-        --name myAKSPublicIPForIngress --sku Standard --allocation-method static --query publicIp.ipAddress -o tsv
+      --name myAKSPublicIPForIngress --sku Standard --allocation-method static --query publicIp.ipAddress -o tsv
       $STATIC_IP = az network public-ip show `
-        --name myAKSPublicIPForIngress `
-        --resource-group $RG `
-        --query "ipAddress" `
-        --output tsv
+      --name myAKSPublicIPForIngress `
+      --resource-group $RG `
+      --query "ipAddress" `
+      --output tsv
       kubectl create namespace ingress-basic
       helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
       helm repo update
       helm install ingress-nginx ingress-nginx/ingress-nginx `
         --namespace ingress-basic `
+        --create-namespace `
         --set controller.replicaCount=2 `
         --set controller.nodeSelector."kubernetes\.io/os"=linux `
         --set defaultBackend.nodeSelector."kubernetes\.io/os"=linux `
         --set controller.service.externalTrafficPolicy=Local `
-        --set controller.service.loadBalancerIP="$STATIC_IP"
+        --set controller.service.loadBalancerIP=$STATIC_IP
       cd ..
-      kubectl apply -f Service-A/service-a-dep.yaml
-      kubectl apply -f Service-A/service-a-srv.yaml
-      kubectl apply -f Service-B/service-b-dep.yaml
-      kubectl apply -f Service-B/service-b-srv.yaml
-      kubectl apply -f ingress.yaml
-      kubectl apply -f networkpolicy.yaml
+      kubectl create secret docker-registry acr-auth-secret `
+        --docker-server=bartest.azurecr.io `
+        --docker-username=access `
+        --docker-password=VI1KARUKYlWzagaUOsTENrOX3nC0ikJLr2nAv+n1sJ+ACRBhd1CY `
+        --docker-email=barvarsul5@gmail.com
+      Start-Sleep -Seconds 60
+      kubectl apply -f "Service-A/service-a-dep.yaml"
+      kubectl apply -f "Service-A/service-a-srv.yaml"
+      kubectl apply -f "Service-B/service-b-dep.yaml"
+      kubectl apply -f "Service-B/service-b-srv.yaml"
+      kubectl apply -f "ingress.yaml"
+      kubectl apply -f "networkpolicy.yaml"
       Write-Output "Service-A at http://$STATIC_IP/service-a"
       Write-Output "Service-B at http://$STATIC_IP/service-b"
     displayName: 'Apply Services'
