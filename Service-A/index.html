@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מצב הביטקוין</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #f0f2f5;
+            color: #333;
+            margin: 0;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 90%;
+            max-width: 500px;
+        }
+        h1 {
+            color: #f7931a; /* צבע ביטקוין */
+            margin-bottom: 20px;
+        }
+        .data-display {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            background-color: #fafafa;
+        }
+        .label {
+            font-size: 1.1em;
+            color: #555;
+            margin-bottom: 5px;
+        }
+        .value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .last-updated {
+            font-size: 0.9em;
+            color: #777;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>מצב הביטקוין הנוכחי</h1>
+        <div class="data-display">
+            <div class="label">ערך נוכחי (USD):</div>
+            <div class="value" id="current-bitcoin-price">טוען...</div>
+            <div class="last-updated" id="current-last-updated"></div>
+        </div>
+        <div class="data-display">
+            <div class="label">ממוצע (10 דקות):</div>
+            <div class="value" id="average-bitcoin-price">טוען...</div>
+            <div class="last-updated" id="average-last-updated"></div>
+        </div>
+    </div>
+
+    <script>
+        const currentPriceElement = document.getElementById('current-bitcoin-price');
+        const currentLastUpdatedElement = document.getElementById('current-last-updated');
+        const averagePriceElement = document.getElementById('average-bitcoin-price');
+        const averageLastUpdatedElement = document.getElementById('average-last-updated');
+
+        let bitcoinPrices = []; // ישמור את ערכי הביטקוין לצורך חישוב ממוצע
+
+        // פונקציה לשליפת ערך הביטקוין הנוכחי
+        async function fetchBitcoinPrice() {
+            try {
+                // שימוש ב-API ציבורי של CoinGecko (שים לב: ייתכנו הגבלות קצב)
+                const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                const price = data.bitcoin.usd;
+                
+                currentPriceElement.textContent = `$${price.toFixed(2)}`;
+                currentLastUpdatedElement.textContent = `עודכן לאחרונה: ${new Date().toLocaleTimeString('he-IL')}`;
+                
+                bitcoinPrices.push(price); // הוסף ללוג של המחירים
+                // שמור רק את 10 הערכים האחרונים (עבור 10 דקות אחרונות אם מעדכנים כל דקה)
+                if (bitcoinPrices.length > 10) {
+                    bitcoinPrices.shift(); 
+                }
+
+            } catch (error) {
+                console.error("שגיאה בשליפת ערך הביטקוין:", error);
+                currentPriceElement.textContent = "שגיאה בטעינה";
+                currentLastUpdatedElement.textContent = "נסה שוב מאוחר יותר";
+            }
+        }
+
+        // פונקציה לחישוב והצגת הממוצע
+        function calculateAndDisplayAverage() {
+            if (bitcoinPrices.length === 0) {
+                averagePriceElement.textContent = "אין מספיק נתונים";
+                averageLastUpdatedElement.textContent = "";
+                return;
+            }
+            const sum = bitcoinPrices.reduce((a, b) => a + b, 0);
+            const average = sum / bitcoinPrices.length;
+            averagePriceElement.textContent = `$${average.toFixed(2)}`;
+            averageLastUpdatedElement.textContent = `מחושב מ-${bitcoinPrices.length} נקודות נתונים`;
+        }
+
+        // הפעל את הפונקציות בפעם הראשונה
+        fetchBitcoinPrice();
+        calculateAndDisplayAverage(); // יציג "אין מספיק נתונים" בהתחלה
+
+        // עדכן את ערך הביטקוין כל דקה (60,000 מילישניות)
+        setInterval(fetchBitcoinPrice, 60 * 1000); 
+
+        // עדכן את הממוצע כל 10 דקות (10 * 60 * 1000 מילישניות)
+        setInterval(calculateAndDisplayAverage, 10 * 60 * 1000); 
+    </script>
+</body>
+</html>

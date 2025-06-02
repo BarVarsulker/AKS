@@ -1,0 +1,42 @@
+#kubernets deployment service-a pod with replicas = 1
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-a-deployment
+  labels:
+    app: service-a-dep
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: service-a-pod
+  template:
+    metadata:
+      labels:
+        app: service-a-pod
+    spec:
+      containers:
+        - name: service-a-pod
+          image: bartest.azurecr.io/service-a/service-a-acr:v6
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 2
+            successThreshold: 1
+            failureThreshold: 3
+      imagePullSecrets:
+        - name: acr-auth-secret
